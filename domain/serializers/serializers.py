@@ -2,7 +2,7 @@ from uuid import UUID
 
 from rest_framework import serializers
 
-from models import (
+from domain.models import (
     Brand,
     GeneratedContent,
     Lookup,
