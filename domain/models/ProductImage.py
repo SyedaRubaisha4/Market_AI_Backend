@@ -1,15 +1,15 @@
-from mongoengine import fields
+from django.db import models
 
 from .BaseModel import BaseModel
 
 
 class ProductImage(BaseModel):
-    product_id = fields.ReferenceField('Product', required=True)
-    storage_key = fields.StringField(required=True, max_length=1024)
-    image_url = fields.URLField(required=True, max_length=2048)
-    image_type = fields.StringField(max_length=100)
-    alt_text = fields.StringField(max_length=500)
-    is_primary = fields.BooleanField(default=False)
-    # created_at = fields.DateTimeField()
+    product = models.ForeignKey('domain.Product', db_column='product_id', on_delete=models.CASCADE)
+    storage_key = models.CharField(max_length=1024)
+    image_url = models.URLField(max_length=2048)
+    image_type = models.CharField(max_length=100, blank=True)
+    alt_text = models.CharField(max_length=500, blank=True)
+    is_primary = models.BooleanField(default=False)
 
-    meta = {'collection': 'product_images'}
+    class Meta:
+        db_table = 'product_images'

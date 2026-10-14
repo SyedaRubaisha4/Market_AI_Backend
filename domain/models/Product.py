@@ -1,17 +1,16 @@
-from mongoengine import fields
+from django.db import models
 
 from .BaseModel import BaseModel
 
 
 class Product(BaseModel):
-    brand_id = fields.ReferenceField('Brand', required=True)
-    category_id = fields.UUIDField(binary=False, required=True)
-    name = fields.StringField(required=True, max_length=255)
-    price = fields.DecimalField(required=True, precision=2, min_value=0)
-    currency = fields.StringField(required=True, max_length=3)
-    basic_details = fields.DictField()
-    status = fields.StringField(max_length=50)
-    # created_at = fields.DateTimeField()
-    # updated_at = fields.DateTimeField()
+    brand = models.ForeignKey('domain.Brand', db_column='brand_id', on_delete=models.CASCADE)
+    category_id = models.UUIDField()
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=18, decimal_places=2)
+    currency = models.CharField(max_length=3)
+    basic_details = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=50, blank=True)
 
-    meta = {'collection': 'products'}
+    class Meta:
+        db_table = 'products'

@@ -6,14 +6,10 @@ from domain.models import (
     Brand,
     GeneratedContent,
     Lookup,
-    Notification,
     Product,
-    ProductImage,
     ScheduledPost,
-    ScheduledPostTarget,
     SocialConnect,
     User,
-    UserToken,
 )
 
 
@@ -25,15 +21,18 @@ class DocumentReferenceField(serializers.Field):
     def to_internal_value(self, data):
         try:
             document_id = UUID(str(data))
-        except (TypeError, ValueError, AttributeError) as exc:
-            raise serializers.ValidationError('A valid UUID is required.') from exc
+        except (TypeError, ValueError, AttributeError):
+            raise serializers.ValidationError("A valid UUID is required.")
 
-        return self.document_class(id=document_id)
+        document = self.document_class.objects.filter(pk=document_id).first()
+
+        if not document:
+            raise serializers.ValidationError("Referenced document does not exist.")
+
+        return document
 
     def to_representation(self, value):
-        if value is None:
-            return None
-        return str(value.id)
+        return str(value.id) if value else None
 
 
 class BaseDocumentSerializer(serializers.Serializer):
@@ -51,7 +50,7 @@ class UserSerializer(BaseDocumentSerializer):
 
 
 class UserTokenSerializer(BaseDocumentSerializer):
-    user_id = DocumentReferenceField(User)
+    user_id = DocumentReferenceField(User, source='user')
     token_hash = serializers.CharField()
     token_type = serializers.CharField(max_length=100)
     expires_at = serializers.DateTimeField()
@@ -59,7 +58,7 @@ class UserTokenSerializer(BaseDocumentSerializer):
 
 
 class BrandSerializer(BaseDocumentSerializer):
-    user_id = DocumentReferenceField(User)
+    user_id = DocumentReferenceField(User, source='user')
     business_name = serializers.CharField(max_length=255)
     business_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True)
@@ -81,17 +80,25 @@ class BrandSerializer(BaseDocumentSerializer):
 
 
 class ProductSerializer(BaseDocumentSerializer):
-    brand_id = DocumentReferenceField(Brand)
+    brand_id = DocumentReferenceField(Brand, source='brand')
     category_id = serializers.UUIDField()
     name = serializers.CharField(max_length=255)
-    price = serializers.DecimalField(max_digits=18, decimal_places=2, min_value=0)
-    currency = serializers.CharField(max_length=3)
-    basic_details = serializers.JSONField(required=False)
-    status = serializers.CharField(max_length=50, required=False, allow_blank=True)
-
+    price = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        min_value=0,
+    )
+    currency = serializers.CharField(min_length=3, max_length=3)
+    basic_details = serializers.JSONField(required=False, default=dict)
+    status = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_blank=True,
+        default="Active",
+    )
 
 class ProductImageSerializer(BaseDocumentSerializer):
-    product_id = DocumentReferenceField(Product)
+    product_id = DocumentReferenceField(Product, source='product')
     storage_key = serializers.CharField(max_length=1024)
     image_url = serializers.URLField(max_length=2048)
     image_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
@@ -100,7 +107,7 @@ class ProductImageSerializer(BaseDocumentSerializer):
 
 
 class GeneratedContentSerializer(BaseDocumentSerializer):
-    product_id = DocumentReferenceField(Product)
+    product_id = DocumentReferenceField(Product, source='product')
     content_type = serializers.CharField(max_length=100)
     platform = serializers.CharField(max_length=100, required=False, allow_blank=True)
     language = serializers.CharField(max_length=100, required=False, allow_blank=True)
@@ -110,8 +117,13 @@ class GeneratedContentSerializer(BaseDocumentSerializer):
 
 
 class SocialConnectSerializer(BaseDocumentSerializer):
-    user_id = DocumentReferenceField(User)
-    brand_id = DocumentReferenceField(Brand, required=False, allow_null=True)
+    user_id = DocumentReferenceField(User, source='user')
+    brand_id = DocumentReferenceField(
+        Brand,
+        source='brand',
+        required=False,
+        allow_null=True,
+    )
     platform = serializers.CharField(max_length=100)
     platform_account_id = serializers.CharField(max_length=255)
     access_token_encrypted = serializers.CharField(write_only=True)
@@ -128,22 +140,28 @@ class SocialConnectSerializer(BaseDocumentSerializer):
 
 
 class ScheduledPostSerializer(BaseDocumentSerializer):
-    brand_id = DocumentReferenceField(Brand)
-    product_id = DocumentReferenceField(Product, required=False, allow_null=True)
+    brand_id = DocumentReferenceField(Brand, source='brand')
+    product_id = DocumentReferenceField(
+        Product,
+        source='product',
+        required=False,
+        allow_null=True,
+    )
     generated_content_id = DocumentReferenceField(
         GeneratedContent,
+        source='generated_content',
         required=False,
         allow_null=True,
     )
     scheduled_at = serializers.DateTimeField()
     time_zone = serializers.CharField(max_length=100)
     status = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    created_by_user_id = DocumentReferenceField(User)
+    created_by_user_id = DocumentReferenceField(User, source='created_by_user')
 
 
 class ScheduledPostTargetSerializer(BaseDocumentSerializer):
-    scheduled_post_id = DocumentReferenceField(ScheduledPost)
-    social_connection_id = DocumentReferenceField(SocialConnect)
+    scheduled_post_id = DocumentReferenceField(ScheduledPost, source='scheduled_post')
+    social_connection_id = DocumentReferenceField(SocialConnect, source='social_connection')
     platform_content_id = serializers.CharField(max_length=255, required=False, allow_blank=True)
     status = serializers.CharField(max_length=50, required=False, allow_blank=True)
     attempt_count = serializers.IntegerField(required=False, default=0, min_value=0)
@@ -159,7 +177,11 @@ class NotificationSerializer(BaseDocumentSerializer):
 
 
 class LookupSerializer(BaseDocumentSerializer):
-    parent = DocumentReferenceField(Lookup, required=False, allow_null=True)
+    parent = DocumentReferenceField(
+        Lookup,
+        required=False,
+        allow_null=True,
+    )
     name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     value = serializers.CharField(max_length=255, required=False, allow_blank=True)
 

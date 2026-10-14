@@ -1,12 +1,13 @@
 import uuid
 
-from mongoengine import Document, fields
+from django.db import models
 
 
-class BaseModel(Document):
-    id = fields.UUIDField(primary_key=True, binary=False, default=uuid.uuid4)
-    created_on = fields.DateTimeField()
-    updated_on = fields.DateTimeField()
-    action_type = fields.IntField(default=1)
+class BaseModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+    action_type = models.PositiveSmallIntegerField(default=1)
 
-    meta = {'abstract': True}
+    class Meta:
+        abstract = True

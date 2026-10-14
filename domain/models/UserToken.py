@@ -1,14 +1,14 @@
-from mongoengine import fields
+from django.db import models
 
 from .BaseModel import BaseModel
 
 
 class UserToken(BaseModel):
-    user_id = fields.ReferenceField('User', required=True)
-    token_hash = fields.StringField(required=True)
-    token_type = fields.StringField(required=True, max_length=100)
-    expires_at = fields.DateTimeField(required=True)
-    revoked_at = fields.DateTimeField()
-    # created_at = fields.DateTimeField()
+    user = models.ForeignKey('domain.User', db_column='user_id', on_delete=models.CASCADE)
+    token_hash = models.CharField(max_length=255)
+    token_type = models.CharField(max_length=100)
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
 
-    meta = {'collection': 'user_tokens'}
+    class Meta:
+        db_table = 'user_tokens'

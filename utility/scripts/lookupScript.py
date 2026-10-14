@@ -5,33 +5,29 @@ import os
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from datetime import datetime
-from mongoengine import connect
-# from ...domain.models.Lookup import Lookup
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+import django
+django.setup()
 
-# from ..helper.constants import Lookups
-# from ..helper.lookups import DESIGNATION, USER_TYPE, TOKEN_TYPE, CITY
+from django.utils import timezone
 from domain.models.Lookup import Lookup
 from utility.helper.constant import Lookups
 from utility.helper.lookup import DESIGNATION, USER_TYPE, TOKEN_TYPE, CASE_TYPE, CASE_PRIORITY, CASE_STATUS, CASE_ROLE, CASE_DOCUMENT_TYPE, CASE_NOTE_TYPE, BILLING_STATUS,CASE_DIARY_TYPE
 
-connect("legal_ai_db")
-
-
 
 def upsert_lookup(id, parent_id, name, value):
 
-    existing = Lookup.objects(id=id).first()
+    existing = Lookup.objects.filter(pk=id).first()
 
     if not existing:
-        Lookup(
+        Lookup.objects.create(
             id=id,
-            parent=Lookup.objects(id=parent_id).first() if parent_id else None,
+            parent=Lookup.objects.filter(pk=parent_id).first() if parent_id else None,
             name=name,
             value=value,
-            created_on=datetime.utcnow(),
-            updated_on=datetime.utcnow(),
-        ).save()
+            created_on=timezone.now(),
+            updated_on=timezone.now(),
+        )
         print(f"Inserted: {name}")
     else:
         print(f"Exists: {name}")

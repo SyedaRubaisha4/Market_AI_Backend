@@ -1,16 +1,17 @@
-from mongoengine import fields
+from django.db import models
 
 from .BaseModel import BaseModel
 
 
 class User(BaseModel):
-    name = fields.StringField(required=True, max_length=255)
-    email = fields.EmailField(required=True, unique=True)
-    password_hash = fields.StringField(required=True)
-    status = fields.StringField(
-        choices=('Active', 'Suspended'),
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    password_hash = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=20,
+        choices=(('Active', 'Active'), ('Suspended', 'Suspended')),
         default='Active',
-        required=True,
     )
 
-    meta = {'collection': 'users'}
+    class Meta:
+        db_table = 'users'

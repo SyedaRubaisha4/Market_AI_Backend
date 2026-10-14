@@ -1,24 +1,35 @@
-from mongoengine import fields
+from django.db import models
 
 from .BaseModel import BaseModel
 
 
 class SocialConnect(BaseModel):
-    user_id = fields.ReferenceField('User', required=True)
-    brand_id = fields.ReferenceField('Brand')
-    platform = fields.StringField(required=True, max_length=100)
-    platform_account_id = fields.StringField(required=True, max_length=255)
-    access_token_encrypted = fields.StringField(required=True)
-    refresh_token_encrypted = fields.StringField()
-    token_expires_at = fields.DateTimeField()
-    granted_scopes = fields.ListField(fields.StringField())
-    connection_status = fields.StringField(
-        choices=('Connected', 'Expired', 'Revoked', 'Disconnected'),
+    user = models.ForeignKey('domain.User', db_column='user_id', on_delete=models.CASCADE)
+    brand = models.ForeignKey(
+        'domain.Brand',
+        db_column='brand_id',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    platform = models.CharField(max_length=100)
+    platform_account_id = models.CharField(max_length=255)
+    access_token_encrypted = models.TextField()
+    refresh_token_encrypted = models.TextField(blank=True)
+    token_expires_at = models.DateTimeField(null=True, blank=True)
+    granted_scopes = models.JSONField(default=list, blank=True)
+    connection_status = models.CharField(
+        max_length=20,
+        choices=(
+            ('Connected', 'Connected'),
+            ('Expired', 'Expired'),
+            ('Revoked', 'Revoked'),
+            ('Disconnected', 'Disconnected'),
+        ),
         default='Connected',
     )
-    connected_at = fields.DateTimeField()
-    last_validated_at = fields.DateTimeField()
-    # created_at = fields.DateTimeField()
-    # updated_at = fields.DateTimeField()
+    connected_at = models.DateTimeField(null=True, blank=True)
+    last_validated_at = models.DateTimeField(null=True, blank=True)
 
-    meta = {'collection': 'social_connects'}
+    class Meta:
+        db_table = 'social_connects'

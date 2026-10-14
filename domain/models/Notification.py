@@ -1,11 +1,12 @@
-from mongoengine import fields
+from django.db import models
 
 from .BaseModel import BaseModel
 
 
 class Notification(BaseModel):
-    body = fields.StringField(required=True)
-    platforms_count = fields.IntField(default=0, min_value=0)
-    project_id = fields.UUIDField(binary=False)
+    body = models.TextField()
+    platforms_count = models.PositiveIntegerField(default=0)
+    project_id = models.UUIDField(null=True, blank=True)
 
-    meta = {'collection': 'notifications'}
+    class Meta:
+        db_table = 'notifications'
