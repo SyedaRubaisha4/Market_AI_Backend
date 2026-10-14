@@ -2,8 +2,17 @@ import os
 from datetime import datetime, timezone
 import os
 from datetime import datetime, timezone
-from config import STORAGE_DIR, STORAGE_PATH, SETTING_CONTENT_DIR, SMTP_SENDER_EMAIL, SMTP_PASSWORD, SMTP_PORT, \
-    SMTP_HOSTNAME, SMTP_USE_SECURE
+from django.conf import settings
+
+STORAGE_DIR = str(settings.MEDIA_ROOT)
+STORAGE_PATH = settings.MEDIA_URL.strip('/')
+SETTING_CONTENT_DIR = settings.SETTING_CONTENT_DIR
+
+SMTP_SENDER_EMAIL = settings.SMTP_SENDER_EMAIL
+SMTP_PASSWORD = settings.SMTP_PASSWORD
+SMTP_PORT = settings.SMTP_PORT
+SMTP_HOSTNAME = settings.SMTP_HOSTNAME
+SMTP_USE_SECURE = settings.SMTP_USE_SECURE
 import random
 import smtplib
 from email.mime.multipart import MIMEMultipart

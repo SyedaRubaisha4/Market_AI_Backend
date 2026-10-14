@@ -140,3 +140,19 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+STORAGE_DIR = str(MEDIA_ROOT)
+STORAGE_PATH = MEDIA_URL.strip('/')
+
+SETTING_CONTENT_DIR = str(BASE_DIR / 'content')
+
+# Email settings
+SMTP_SENDER_EMAIL = os.environ.get('SMTP_SENDER_EMAIL', '')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
+SMTP_HOSTNAME = os.environ.get('SMTP_HOSTNAME', '')
+SMTP_USE_SECURE = os.environ.get('SMTP_USE_SECURE', 'True') == 'True'

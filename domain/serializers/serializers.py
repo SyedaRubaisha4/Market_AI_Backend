@@ -78,6 +78,13 @@ class BrandSerializer(BaseDocumentSerializer):
     brand_keywords = serializers.ListField(child=serializers.CharField(), required=False)
     status = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
+class ProductImageSerializer(BaseDocumentSerializer):
+    product_id = DocumentReferenceField(Product, source='product')
+    storage_key = serializers.CharField(max_length=1024)
+    image_url = serializers.URLField(max_length=2048)
+    image_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    alt_text = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    is_primary = serializers.BooleanField(required=False, default=False)
 
 class ProductSerializer(BaseDocumentSerializer):
     brand_id = DocumentReferenceField(Brand, source='brand')
@@ -96,14 +103,12 @@ class ProductSerializer(BaseDocumentSerializer):
         allow_blank=True,
         default="Active",
     )
+    images = ProductImageSerializer(
+        source='productimage_set',
+        many=True,
+        read_only=True,
+    )
 
-class ProductImageSerializer(BaseDocumentSerializer):
-    product_id = DocumentReferenceField(Product, source='product')
-    storage_key = serializers.CharField(max_length=1024)
-    image_url = serializers.URLField(max_length=2048)
-    image_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    alt_text = serializers.CharField(max_length=500, required=False, allow_blank=True)
-    is_primary = serializers.BooleanField(required=False, default=False)
 
 
 class GeneratedContentSerializer(BaseDocumentSerializer):

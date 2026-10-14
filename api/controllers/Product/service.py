@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 
 from domain.models.Product import Product
 from domain.models.ProductImage import ProductImage
+import uuid
 from uuid import UUID
 from domain.serializers.serializers import ProductSerializer, ProductImageSerializer
 from utility.common.createresponse import CreateResponse
@@ -12,7 +13,8 @@ import traceback
 import os
 from django.core.files.storage import default_storage
 
-def create_or_update_product(data, image_files=None):
+from utility.helper.helperfuncitons import HelperFunctions
+def create_or_update_product(data, image_files=None, request=None):
     try:
         product_id = data.get("id")
         product = None
@@ -54,26 +56,32 @@ def create_or_update_product(data, image_files=None):
         with transaction.atomic():
             product.save()
 
-            for image_file in image_files or []:
-                storage_key = default_storage.save(
-                    f"products/{product.id}/{os.path.basename(image_file.name)}",
-                    image_file
+            for index, image_file in enumerate(image_files or []):
+                file_name = uuid.uuid4().hex
+                file_path = f"products/{product.id}"
+
+                saved_path = HelperFunctions.save_file(
+                    image_file,
+                    file_name,
+                    file_path,
                 )
 
-                image_data = {
-                    "product_id": str(product.id),
-                    "storage_key": storage_key,
-                    "image_url": default_storage.url(storage_key),
-                    "image_type": "",
-                    "alt_text": os.path.splitext(image_file.name)[0],
-                    "is_primary": len(saved_images) == 0,
-                }
+                image_url = request.build_absolute_uri(
+                    "/" + saved_path.replace("\\", "/").lstrip("/")
+                )
 
-                image_serializer = ProductImageSerializer(data=image_data)
-                image_serializer.is_valid(raise_exception=True)
-                image_values = dict(image_serializer.validated_data)
-                image_values.pop("action_type", None)
-                saved_images.append(ProductImage.objects.create(**image_values))
+                image = ProductImage.objects.create(
+                    product=product,
+                    storage_key=(
+                        f"{file_path}/{file_name}"
+                        f"{os.path.splitext(image_file.name)[1]}"
+                    ),
+                    image_url=image_url,
+                    image_type=getattr(image_file, "content_type", "") or "",
+                    alt_text=os.path.splitext(image_file.name)[0],
+                    is_primary=(index == 0),
+                )
+                saved_images.append(image)
 
         return CreateResponse.success(
             {
@@ -90,34 +98,59 @@ def create_or_update_product(data, image_files=None):
         return CreateResponse.error(
             str(e), int(ErrorCodes.FAILED)
         )
-
 def get_products(request):
     try:
         page_size = int(request.get('page_size', 10))
         page_number = int(request.get('page', 1))
+
         if page_number < 1 or page_size < 1:
             raise ValueError("page and page_size must be positive integers.")
 
-        query = Product.objects.all()
+        query = Product.objects.exclude(action_type=3)
+
         search_query = request.get('search')
         if search_query:
             query = query.filter(name__icontains=search_query)
-        action_type = request.get('action_type')
-        if action_type:
-            query = query.filter(action_type=action_type)
+
         paginator = Paginator(query.order_by('-created_on'), page_size)
         products = paginator.get_page(page_number)
+
+        product_list = ProductSerializer(
+            products.object_list, many=True
+        ).data
+
+        product_images = ProductImage.objects.filter(
+            product_id__in=[p.id for p in products.object_list]
+        )
+
+        images_by_product = {}
+
+        for image in product_images:
+            product_id = str(image.product_id)
+
+            if product_id not in images_by_product:
+                images_by_product[product_id] = []
+
+            images_by_product[product_id].append(
+                ProductImageSerializer(image).data
+            )
+
+        for product in product_list:
+            product_id = str(product['id'])
+            product['images'] = images_by_product.get(product_id, [])
+
         return CreateResponse.paginated(
-            ProductSerializer(products.object_list, many=True).data,
-            message=errormessages.PRODUCT_LIST_FETCHED_SUCCESSFULLY,
+            product_list,
+            message=errormessages.DATA_FOUND,
             page=products.number,
             page_size=page_size,
             total_records=paginator.count,
             error_code=int(ErrorCodes.SUCCESS),
         )
+
     except Exception as e:
         print(traceback.format_exc())
-        return CreateResponse.error(str(e), int(ErrorCodes.FAILED)) 
+        return CreateResponse.error(str(e), int(ErrorCodes.FAILED))
 
 def get_product_by_id(product_id):
     try:
@@ -134,10 +167,11 @@ def delete_product(product_id):
     try:
         product = Product.objects.filter(pk=product_id).first()
         if not product:
-            return CreateResponse.error(errormessages.PRODUCT_NOT_FOUND, int(ErrorCodes.NOT_FOUND))
+            return CreateResponse.error(errormessages.NO_RECORD, int(ErrorCodes.NOT_FOUND))
         
-        product.delete()
-        return CreateResponse.success(None, errormessages.PRODUCT_DELETED_SUCCESSFULLY)
+        product.action_type=3
+        product.save()
+        return CreateResponse.success(None, errormessages.SUCCESS)
     except Exception as e:
         print(traceback.format_exc())
         return CreateResponse.error(str(e), int(ErrorCodes.FAILED))

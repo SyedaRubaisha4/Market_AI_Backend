@@ -1,9 +1,12 @@
 """
 URL configuration for config project.
 """
+from django.conf.urls import static
 from django.contrib import admin
 from django.urls import path, include, re_path
 from rest_framework import permissions
+from django.conf import settings
+from django.conf.urls.static import static
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -31,4 +34,11 @@ urlpatterns = [
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
         path('api/', include('api.urls')),    
 
+
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )
