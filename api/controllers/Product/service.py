@@ -120,7 +120,8 @@ def get_products(request):
         ).data
 
         product_images = ProductImage.objects.filter(
-            product_id__in=[p.id for p in products.object_list]
+            product_id__in=[p.id for p in products.object_list],
+            action_type=1,
         )
 
         images_by_product = {}
@@ -158,7 +159,13 @@ def get_product_by_id(product_id):
         if not product:
             return CreateResponse.error(errormessages.PRODUCT_NOT_FOUND, int(ErrorCodes.NOT_FOUND))
         
-        return CreateResponse.success(ProductSerializer(product).data, errormessages.PRODUCT_FETCHED_SUCCESSFULLY)
+        product_data = ProductSerializer(product).data
+        product_data['images'] = ProductImageSerializer(
+            ProductImage.objects.filter(product=product, action_type=1),
+            many=True
+        ).data
+
+        return CreateResponse.success(product_data, errormessages.PRODUCT_FETCHED_SUCCESSFULLY)
     except Exception as e:
         print(traceback.format_exc())
         return CreateResponse.error(str(e), int(ErrorCodes.FAILED))
@@ -169,8 +176,11 @@ def delete_product(product_id):
         if not product:
             return CreateResponse.error(errormessages.NO_RECORD, int(ErrorCodes.NOT_FOUND))
         
-        product.action_type=3
-        product.save()
+        with transaction.atomic():
+            product.action_type = 3
+            product.save()
+            ProductImage.objects.filter(product=product).update(action_type=3)
+
         return CreateResponse.success(None, errormessages.SUCCESS)
     except Exception as e:
         print(traceback.format_exc())

@@ -14,7 +14,8 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 from pathlib import Path
-
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')

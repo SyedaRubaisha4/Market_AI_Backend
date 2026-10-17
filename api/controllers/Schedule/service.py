@@ -1,0 +1,102 @@
+from domain.models.ScheduledPost import Schedule
+from domain.serializers.serializers import ScheduleSerializer
+
+import uuid
+from uuid import UUID
+from utility.common.createresponse import CreateResponse
+from utility.helper import errormessages
+from utility.helper.constant import ErrorCodes
+import traceback
+import os
+from django.core.files.storage import default_storage
+
+def create_or_update_schedule(data, request=None):
+    try:
+        schedule_id = data.get("id")
+        schedule = None
+
+        if schedule_id:
+            try:
+                schedule_id = UUID(str(schedule_id))
+            except (ValueError, TypeError, AttributeError):
+                return CreateResponse.error("Invalid schedule ID.")
+
+            schedule = Schedule.objects.filter(pk=schedule_id).first()
+
+            if not schedule:
+                return CreateResponse.error("Schedule not found.")
+
+        serializer = ScheduleSerializer(
+            instance=schedule,
+            data=data,
+            partial=schedule is not None
+        )
+
+        if not serializer.is_valid():
+            return CreateResponse.error(serializer.errors)
+
+        values = dict(serializer.validated_data)
+        values.pop("action_type", None)
+
+        if schedule is None:
+            schedule = Schedule(**values)
+        else:
+            for key, value in values.items():
+                setattr(schedule, key, value)
+
+        schedule.save()
+        return CreateResponse.success("Schedule saved successfully.", {"id": str(schedule.id)})
+
+    except Exception as e:
+        traceback.print_exc()
+        return CreateResponse.error(f"An error occurred: {str(e)}")
+
+
+def get_schedule_by_id(schedule_id):
+    try:
+        try:
+            schedule_id = UUID(str(schedule_id))
+        except (ValueError, TypeError, AttributeError):
+            return CreateResponse.error("Invalid schedule ID.")
+
+        schedule = Schedule.objects.filter(pk=schedule_id).first()
+
+        if not schedule:
+            return CreateResponse.error("Schedule not found.")
+
+        serializer = ScheduleSerializer(schedule)
+        return CreateResponse.success("Schedule retrieved successfully.", serializer.data)
+
+    except Exception as e:
+        traceback.print_exc()
+        return CreateResponse.error(f"An error occurred: {str(e)}")
+
+def delete_schedule(schedule_id):
+    try:
+        try:
+            schedule_id = UUID(str(schedule_id))
+        except (ValueError, TypeError, AttributeError):
+            return CreateResponse.error("Invalid schedule ID.")
+
+        schedule = Schedule.objects.filter(pk=schedule_id).first()
+
+        if not schedule:
+            return CreateResponse.error("Schedule not found.")
+        schedule.action_type = 3
+
+        schedule.update()
+        return CreateResponse.success("Schedule deleted successfully.")
+
+    except Exception as e:
+        traceback.print_exc()
+        return CreateResponse.error(f"An error occurred: {str(e)}")    
+
+def get_all_schedules():
+    try:
+        schedules = Schedule.objects.filter(action_type=1)
+        serializer = ScheduleSerializer(schedules, many=True)
+        return CreateResponse.success("Schedules retrieved successfully.", serializer.data)
+
+    except Exception as e:
+        traceback.print_exc()
+        return CreateResponse.error(f"An error occurred: {str(e)}")    
