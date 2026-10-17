@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',      
     'drf_yasg',             
     'domain.apps.DomainConfig',
+    'rest_framework_simplejwt.token_blacklist', 
 
 ]
 
@@ -157,3 +158,4 @@ SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
 SMTP_HOSTNAME = os.environ.get('SMTP_HOSTNAME', '')
 SMTP_USE_SECURE = os.environ.get('SMTP_USE_SECURE', 'True') == 'True'
+FRONTEND_URL = 'https://market-ai-henna.vercel.app/login'
