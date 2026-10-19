@@ -176,3 +176,4 @@ def view_request_password_reset(request):
         return Response({"success": True, "message": "Reset link sent if email exists"})
     except Exception as e:
         return Response({"success": False, "errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    

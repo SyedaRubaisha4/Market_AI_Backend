@@ -6,6 +6,6 @@ urlpatterns = [
     path ('login/',view_login_user,name='view_login_user'),
     path ('logout/',view_logout_user,name='view_logout_user'),
     path ('change-password/',view_change_password,name='change_password'),
-    path ('request-password/',view_request_password_reset,name='request_password_reset')
-    
+    path ('request-password/',view_request_password_reset,name='request_password_reset'),
+
 ]               
