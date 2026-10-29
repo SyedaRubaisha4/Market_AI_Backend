@@ -48,9 +48,16 @@ INSTALLED_APPS = [
     'drf_yasg',             
     'domain.apps.DomainConfig',
     'rest_framework_simplejwt.token_blacklist', 
+    'django.contrib.sites', 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'socialchimp',
+    'django_celery_beat',
+    'django_celery_results'
 
 ]
-
+SITE_ID = 1
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -59,8 +66,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+    'allauth.account.middleware.AccountMiddleware',
 
+]
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
@@ -159,3 +171,4 @@ SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
 SMTP_HOSTNAME = os.environ.get('SMTP_HOSTNAME', '')
 SMTP_USE_SECURE = os.environ.get('SMTP_USE_SECURE', 'True') == 'True'
 FRONTEND_URL = 'https://market-ai-henna.vercel.app/login'
+FERNET_KEY = os.environ.get('FERNET_KEY')  

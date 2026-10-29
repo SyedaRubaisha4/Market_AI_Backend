@@ -14,6 +14,10 @@ class SocialConnect(BaseModel):
     )
     platform = models.CharField(max_length=100)
     platform_account_id = models.CharField(max_length=255)
+    socialchimp_connection_id = models.CharField(
+        max_length=255, unique=True, null=True, blank=True,
+        help_text="SocialChimp ka internal connection ID"
+    )
     access_token_encrypted = models.TextField()
     refresh_token_encrypted = models.TextField(blank=True)
     token_expires_at = models.DateTimeField(null=True, blank=True)

@@ -8,11 +8,12 @@ __all__ = [
     'Notification',
     'Product',
     'ProductImage',
-    'ScheduledPost',
-    'ScheduledPostTarget',
+ #   'ScheduledPost',
+  #  'ScheduledPostTarget',
     'SocialConnect',
     'User',
     'UserToken',
+    'SocialConnect',
 ]
 
 
