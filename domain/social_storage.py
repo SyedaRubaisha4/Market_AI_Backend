@@ -1,19 +1,20 @@
 # domain/social_storage.py
 
-from datetime import datetime
 from django.utils import timezone
-from socialchimp.models import Connection, Token
-from socialchimp.storage import Storage
+from django.conf import settings
+from socialchimp import AppCredentials, Connection, Token
 from domain.models.SocialConnect import SocialConnect
 from domain.encryption import encrypt, decrypt
+import os
 
-class DjangoStorage(Storage):
-    """SocialConnect model ko SocialChimp ke Connection object se map karta hai."""
+class DjangoStorage:
+    """Maps SocialChimp connections to the SocialConnect model."""
 
-    def get_connection(self, connection_id: str):
-        try:
-            row = SocialConnect.objects.get(socialchimp_connection_id=connection_id)
-        except SocialConnect.DoesNotExist:
+    def get_connection(self, connection_id: str) -> Connection | None:
+        row = SocialConnect.objects.filter(
+            socialchimp_connection_id=connection_id
+        ).first()
+        if row is None:
             return None
 
         if row.token_expires_at and row.token_expires_at < timezone.now():
@@ -23,48 +24,61 @@ class DjangoStorage(Storage):
         return Connection(
             id=row.socialchimp_connection_id,
             platform=row.platform,
-            access_token=decrypt(row.access_token_encrypted),
-            refresh_token=decrypt(row.refresh_token_encrypted) if row.refresh_token_encrypted else None,
-            expires_at=row.token_expires_at,
-            scopes=row.granted_scopes or [],
+            host=None,
             account_id=row.platform_account_id,
+            account_name='',
+            token=Token(
+                access_token=decrypt(row.access_token_encrypted),
+                refresh_token=(
+                    decrypt(row.refresh_token_encrypted)
+                    if row.refresh_token_encrypted else None
+                ),
+                expires_at=row.token_expires_at,
+            ),
+            scopes=tuple(row.granted_scopes or []),
+            extra={},
         )
 
-    def save_connection(self, connection: Connection):
-        # Platform account ID se existing row dhoondein ya naya banayein
-        row, created = SocialConnect.objects.update_or_create(
+    def save_connection(self, connection: Connection) -> None:
+        SocialConnect.objects.update_or_create(
             socialchimp_connection_id=connection.id,
             defaults={
                 'platform': connection.platform,
                 'platform_account_id': connection.account_id or '',
-                'access_token_encrypted': encrypt(connection.access_token or ''),
-                'refresh_token_encrypted': encrypt(connection.refresh_token) if connection.refresh_token else '',
-                'token_expires_at': connection.expires_at,
-                'granted_scopes': connection.scopes or [],
+                'access_token_encrypted': encrypt(connection.token.access_token or ''),
+                'refresh_token_encrypted': (
+                    encrypt(connection.token.refresh_token)
+                    if connection.token.refresh_token else ''
+                ),
+                'token_expires_at': connection.token.expires_at,
+                'granted_scopes': list(connection.scopes or []),
                 'connection_status': 'Connected',
-                'connected_at': timezone.now() if created else None,
+                'connected_at': timezone.now(),
                 'last_validated_at': timezone.now(),
             },
         )
-        return row
 
-    def delete_connection(self, connection_id: str):
+    def delete_connection(self, connection_id: str) -> None:
         SocialConnect.objects.filter(
             socialchimp_connection_id=connection_id
         ).update(connection_status='Disconnected')
 
-    def get_app(self, platform: str, host: str = None):
-        """Platform ke app credentials return karein — settings se."""
-        from django.conf import settings
-        apps = getattr(settings, 'SOCIALCHIMP_APPS', {})
-        cfg = apps.get(platform)
-        if not cfg:
-            return None
-        from socialchimp import AppCredentials
-        return AppCredentials(
-            client_id=cfg['client_id'],
-            client_secret=cfg['client_secret'],
-        )
+    def get_app(self, platform: str, host: str | None = None) -> AppCredentials | None:
+        if platform in ['facebook', 'instagram']:
+            client_id = os.environ.get('FACEBOOK_APP_ID')
+            client_secret = os.environ.get('FACEBOOK_APP_SECRET')
 
-    def save_app(self, platform: str, host, app):
+            if not client_id or not client_secret:
+                print(f"❌ DEBUG: .env mein {platform.upper()}_APP_ID not found SECRET keys")
+                return None
+
+            return AppCredentials(
+                platform=platform,
+                host=host,
+                client_id=client_id,
+                client_secret=client_secret,
+            )
+        return None
+
+    def save_app(self, app: AppCredentials) -> None:
         pass

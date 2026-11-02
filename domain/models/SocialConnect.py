@@ -1,10 +1,9 @@
 from django.db import models
-
 from .BaseModel import BaseModel
 
-
 class SocialConnect(BaseModel):
-    user = models.ForeignKey('domain.User', db_column='user_id', on_delete=models.CASCADE)
+    # 👇 Yahan null=True, blank=True lazmi hona chahiye
+    user = models.ForeignKey('domain.User', db_column='user_id', on_delete=models.CASCADE, null=True, blank=True)
     brand = models.ForeignKey(
         'domain.Brand',
         db_column='brand_id',
@@ -14,12 +13,13 @@ class SocialConnect(BaseModel):
     )
     platform = models.CharField(max_length=100)
     platform_account_id = models.CharField(max_length=255)
+    
     socialchimp_connection_id = models.CharField(
         max_length=255, unique=True, null=True, blank=True,
         help_text="SocialChimp ka internal connection ID"
     )
-    access_token_encrypted = models.TextField()
-    refresh_token_encrypted = models.TextField(blank=True)
+    access_token_encrypted = models.TextField(null=True, blank=True)
+    refresh_token_encrypted = models.TextField(null=True, blank=True)
     token_expires_at = models.DateTimeField(null=True, blank=True)
     granted_scopes = models.JSONField(default=list, blank=True)
     connection_status = models.CharField(

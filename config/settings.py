@@ -172,3 +172,21 @@ SMTP_HOSTNAME = os.environ.get('SMTP_HOSTNAME', '')
 SMTP_USE_SECURE = os.environ.get('SMTP_USE_SECURE', 'True') == 'True'
 FRONTEND_URL = 'https://market-ai-henna.vercel.app/login'
 FERNET_KEY = os.environ.get('FERNET_KEY')  
+# config/settings.py (sab se neeche)
+FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID')
+FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET')
+# config/settings.py (Sab se neeche)
+
+# --- CELERY SETTINGS (USING MYSQL VIA SQLALCHEMY) ---
+db_url = os.environ.get('DATABASE_URL', '')
+if db_url.startswith('mysql://'):
+    # 'mysql://' ko 'sqla+mysql://' se replace karein
+    db_url = db_url.replace('mysql://', 'sqla+mysql://', 1)
+
+CELERY_BROKER_URL = db_url
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

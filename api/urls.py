@@ -10,5 +10,6 @@ urlpatterns = [
     path('profile/' , include('api.controllers.Profile.urls')),
     path('brands/', include('api.controllers.Brands.urls')),
     path('social/facebook/', include('api.controllers.Social.Facebook.urls')),
+    path('social/instagram/', include('api.controllers.Social.Instagram.urls')),
 
 ]
