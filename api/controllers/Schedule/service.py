@@ -102,4 +102,24 @@ def get_all_schedules(query_params=None):
 
     except Exception as e:
         traceback.print_exc()
-        return CreateResponse.error(f"An error occurred: {str(e)}")
+        return CreateResponse.error(f"An error occurred: {str(e)}")    
+
+def create_facebook_schedule(content, social_connect, scheduled_time):
+    if social_connect.platform != "facebook":
+        raise ValueError("This function is only for Facebook.")
+        
+    schedule = Schedule.objects.create(
+        content=content,
+        social_connect=social_connect,
+        brand=social_connect.brand,
+        scheduled_time=scheduled_time,
+        status="pending",
+    )
+
+    # If the time has already passed, run immediately; otherwise, schedule for later
+    if scheduled_time <= timezone.now():
+        publish_to_facebook.delay(schedule.id)
+    else:
+        publish_to_facebook.apply_async(args=[schedule.id], eta=scheduled_time)
+
+    return schedule
