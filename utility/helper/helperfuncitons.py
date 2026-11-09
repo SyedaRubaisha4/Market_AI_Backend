@@ -129,17 +129,17 @@ class HelperFunctions():
         return unique_name
     
     @staticmethod
-    def save_file(image_path, file_name, file_path):
+    def save_file(image, file_name, file_path):
         upload_to = os.path.join(STORAGE_DIR, file_path)
         os.makedirs(upload_to, exist_ok=True)
 
-        ext = os.path.splitext(image_path)[1]
+        ext = os.path.splitext(image.name)[1]
         file_name = file_name + ext
         final_path = os.path.join(upload_to, file_name)
 
-        with open(image_path, 'rb') as src:
-            with open(final_path, 'wb') as dst:
-                dst.write(src.read())
+        with open(final_path, 'wb') as destination:
+            for chunk in image.chunks():
+                destination.write(chunk)
 
         return os.path.join(STORAGE_PATH, file_path, file_name)
 

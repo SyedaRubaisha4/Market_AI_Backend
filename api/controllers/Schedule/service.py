@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 from domain.models.ScheduledPost import ScheduledPost as Schedule
 from domain.serializers.serializers import ScheduledPostSerializer as ScheduleSerializer
+=======
+from domain.models.ScheduledPost import ScheduledPost
+from domain.serializers.serializers import ScheduledPostSerializer
+>>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
 
 import uuid
 from uuid import UUID
@@ -9,6 +14,7 @@ from utility.helper.constant import ErrorCodes
 import traceback
 import os
 from django.core.files.storage import default_storage
+
 
 def create_or_update_schedule(data, request=None):
     try:
@@ -21,12 +27,12 @@ def create_or_update_schedule(data, request=None):
             except (ValueError, TypeError, AttributeError):
                 return CreateResponse.error("Invalid schedule ID.")
 
-            schedule = Schedule.objects.filter(pk=schedule_id).first()
+            schedule = ScheduledPost.objects.filter(pk=schedule_id).first()
 
             if not schedule:
                 return CreateResponse.error("Schedule not found.")
 
-        serializer = ScheduleSerializer(
+        serializer = ScheduledPostSerializer(
             instance=schedule,
             data=data,
             partial=schedule is not None
@@ -39,7 +45,7 @@ def create_or_update_schedule(data, request=None):
         values.pop("action_type", None)
 
         if schedule is None:
-            schedule = Schedule(**values)
+            schedule = ScheduledPost(**values)
         else:
             for key, value in values.items():
                 setattr(schedule, key, value)
@@ -59,17 +65,18 @@ def get_schedule_by_id(schedule_id):
         except (ValueError, TypeError, AttributeError):
             return CreateResponse.error("Invalid schedule ID.")
 
-        schedule = Schedule.objects.filter(pk=schedule_id).first()
+        schedule = ScheduledPost.objects.filter(pk=schedule_id).first()
 
         if not schedule:
             return CreateResponse.error("Schedule not found.")
 
-        serializer = ScheduleSerializer(schedule)
+        serializer = ScheduledPostSerializer(schedule)
         return CreateResponse.success("Schedule retrieved successfully.", serializer.data)
 
     except Exception as e:
         traceback.print_exc()
         return CreateResponse.error(f"An error occurred: {str(e)}")
+
 
 def delete_schedule(schedule_id):
     try:
@@ -78,24 +85,32 @@ def delete_schedule(schedule_id):
         except (ValueError, TypeError, AttributeError):
             return CreateResponse.error("Invalid schedule ID.")
 
-        schedule = Schedule.objects.filter(pk=schedule_id).first()
+        schedule = ScheduledPost.objects.filter(pk=schedule_id).first()
 
         if not schedule:
             return CreateResponse.error("Schedule not found.")
-        schedule.action_type = 3
 
-        schedule.update()
+        schedule.action_type = 3
+        schedule.save(update_fields=["action_type", "updated_on"])
         return CreateResponse.success("Schedule deleted successfully.")
 
     except Exception as e:
         traceback.print_exc()
-        return CreateResponse.error(f"An error occurred: {str(e)}")    
+        return CreateResponse.error(f"An error occurred: {str(e)}")
 
+<<<<<<< HEAD
 def get_all_schedules(request):
     try:
         schedules = Schedule.objects.filter(brand__user=request.user, action_type=1)
         
         serializer = ScheduleSerializer(schedules, many=True)
+=======
+
+def get_all_schedules(query_params=None):
+    try:
+        schedules = ScheduledPost.objects.filter(action_type=1)
+        serializer = ScheduledPostSerializer(schedules, many=True)
+>>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
         return CreateResponse.success("Schedules retrieved successfully.", serializer.data)
     except Exception as e:
         traceback.print_exc()

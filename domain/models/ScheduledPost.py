@@ -30,3 +30,6 @@ class ScheduledPost(BaseModel):
 
     class Meta:
         db_table = 'scheduled_posts'
+
+
+Schedule = ScheduledPost
