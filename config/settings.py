@@ -14,6 +14,7 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import timedelta
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -54,11 +55,13 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'socialchimp',
     'django_celery_beat',
-    'django_celery_results'
+    'django_celery_results' ,
+    'corsheaders',
 
 ]
 SITE_ID = 1
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,6 +72,19 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 
 ]
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,               
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+}
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -170,7 +186,7 @@ SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
 SMTP_HOSTNAME = os.environ.get('SMTP_HOSTNAME', '')
 SMTP_USE_SECURE = os.environ.get('SMTP_USE_SECURE', 'True') == 'True'
-FRONTEND_URL = 'https://market-ai-henna.vercel.app/login'
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 FERNET_KEY = os.environ.get('FERNET_KEY')  
 # config/settings.py (sab se neeche)
 FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID')
@@ -190,3 +206,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'https://market-ai-henna.vercel.app',
+]
+# or keep CORS_ALLOW_ALL_ORIGINS = True only when DEBUG:
+# CORS_ALLOW_ALL_ORIGINS = DEBUG
+

@@ -2,7 +2,6 @@ from django.db import models
 from .BaseModel import BaseModel
 
 class SocialConnect(BaseModel):
-    # 👇 Yahan null=True, blank=True lazmi hona chahiye
     user = models.ForeignKey('domain.User', db_column='user_id', on_delete=models.CASCADE, null=True, blank=True)
     brand = models.ForeignKey(
         'domain.Brand',

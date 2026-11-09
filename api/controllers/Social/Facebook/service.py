@@ -3,6 +3,7 @@ from asgiref.sync import async_to_sync
 from socialchimp.platform import SendToNetwork, ChooseAccount, Finished
 from domain.social_client import get_social_client
 
+
 CALLBACK_URL = "http://localhost:8000/api/social/facebook/callback/"
 def start_facebook_login(user_id: int):
     required_scopes = [

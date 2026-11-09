@@ -34,6 +34,7 @@ def send_password_reset_email(user):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+    
     send_mail(
         subject='Password Reset Request',
         message=f'Click this link to reset your password:\n\n{reset_link}',

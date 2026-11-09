@@ -4,6 +4,9 @@ from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.exceptions import ValidationError
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from .service import create_brand, get_user_brands, get_brand_by_id, update_brand, delete_brand
 
@@ -29,6 +32,8 @@ from .service import create_brand, get_user_brands, get_brand_by_id, update_bran
     tags=['Brand']
 )
 @api_view(['POST'])
+@authentication_classes([JWTAuthentication])  
+@permission_classes([IsAuthenticated])           
 def view_create_brand(request):
     if not request.user.is_authenticated:
         return Response({"success": False, "errors": "Auth required."}, status=401)

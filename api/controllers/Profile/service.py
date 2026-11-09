@@ -12,6 +12,12 @@ import re
 
 User = get_user_model()
 def get_profile(user):
+    from domain.models.Brand import Brand 
+
+    brands = Brand.objects.filter(user=user)
+    has_brand = brands.exists()
+    brand_id = brands.first().id if has_brand else None
+
     return {
         "id": user.id,
         "username": user.username,
@@ -19,6 +25,8 @@ def get_profile(user):
         "full_name": getattr(user, 'full_name', ''),
         "is_active": user.is_active,
         "date_joined": user.date_joined,
+        "is_onboarded": has_brand,
+        "brand_id": brand_id       
     }
 
 def update_profile(user, data):
@@ -47,7 +55,6 @@ def update_profile(user, data):
     return user
 
 def delete_profile(user):
-    # Best practice: Soft delete
     user.is_active = False
     user.save()
     return True

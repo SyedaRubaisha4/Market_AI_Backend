@@ -8,7 +8,11 @@ from domain.models.Brand import Brand
 from domain.models.SocialConnect import SocialConnect
 from domain.models import User as DomainUser  
 from .service import start_facebook_login, process_facebook_callback, choose_facebook_page
-
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from domain.models import SocialConnect
 @login_required
 def connect_facebook(request):
     if request.method == "GET":
@@ -96,7 +100,7 @@ def choose_page_facebook(request):
                     
                 conn.connected_at = timezone.now()
                 conn.save()
-                print(f"✅ Connection saved with DomainUser: {actual_user}")
+                print(f" Connection saved with DomainUser: {actual_user}")
             else:
                 print("There is no domain user in database .")
 
@@ -106,4 +110,24 @@ def choose_page_facebook(request):
 
 @login_required
 def connect_success(request):
-    return HttpResponse("<h2> Facebook Connected Successfully!</h2><p>Check database.</p>")
+        return redirect("http://localhost:5173/social-accounts")
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def view_get_social_accounts(request):
+    try:
+        accounts = SocialConnect.objects.filter(user=request.user, connection_status='Connected')
+        
+        data = []
+        for acc in accounts:
+            data.append({
+                "platform": acc.platform,
+                "connected": True,
+                "accountName": acc.platform_account_id or acc.platform.capitalize(),
+                "identifier": acc.platform_account_id,
+            })
+            
+        return Response({"success": True, "accounts": data}, status=200)
+    except Exception as e:
+        return Response({"success": False, "errors": str(e)}, status=500)

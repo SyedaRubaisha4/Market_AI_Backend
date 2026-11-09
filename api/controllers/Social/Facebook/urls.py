@@ -7,4 +7,6 @@ urlpatterns = [
     path("callback/", views.callback_facebook,    name="fb-callback"),
     path("choose/",   views.choose_page_facebook, name="fb-choose"),
     path("success/",  views.connect_success,      name="social-connect-success"),
+    path("accounts/", views.view_get_social_accounts, name="get-social-accounts"),
+
 ]

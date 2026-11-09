@@ -1,5 +1,5 @@
-from domain.models.ScheduledPost import Schedule
-from domain.serializers.serializers import ScheduleSerializer
+from domain.models.ScheduledPost import ScheduledPost as Schedule
+from domain.serializers.serializers import ScheduledPostSerializer as ScheduleSerializer
 
 import uuid
 from uuid import UUID
@@ -91,15 +91,15 @@ def delete_schedule(schedule_id):
         traceback.print_exc()
         return CreateResponse.error(f"An error occurred: {str(e)}")    
 
-def get_all_schedules():
+def get_all_schedules(request):
     try:
-        schedules = Schedule.objects.filter(action_type=1)
+        schedules = Schedule.objects.filter(brand__user=request.user, action_type=1)
+        
         serializer = ScheduleSerializer(schedules, many=True)
         return CreateResponse.success("Schedules retrieved successfully.", serializer.data)
-
     except Exception as e:
         traceback.print_exc()
-        return CreateResponse.error(f"An error occurred: {str(e)}")    
+        return CreateResponse.error(f"An error occurred: {str(e)}")
 
 def create_facebook_schedule(content, social_connect, scheduled_time):
     if social_connect.platform != "facebook":
@@ -113,7 +113,6 @@ def create_facebook_schedule(content, social_connect, scheduled_time):
         status="pending",
     )
 
-    # If the time has already passed, run immediately; otherwise, schedule for later
     if scheduled_time <= timezone.now():
         publish_to_facebook.delay(schedule.id)
     else:

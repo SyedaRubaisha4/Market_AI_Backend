@@ -10,29 +10,25 @@ from domain.models import User as DomainUser
 from .service import start_instagram_login, process_instagram_callback, choose_instagram_account
 
 @login_required
+@login_required
 def connect_instagram(request):
-    if request.method == "GET":
-        brands = Brand.objects.filter(user=request.user)
-        csrf_token = request.COOKIES.get('csrftoken', '')
-        
-        html = "<h2>Select Brand to connect Instagram:</h2><form method='POST'>"
-        html += f"<input type='hidden' name='csrfmiddlewaretoken' value='{csrf_token}' />"
-        
-        if not brands:
-            html += "<p>No brands found. Create one in Admin.</p>"
-        else:
-            for brand in brands:
-                html += f"<button type='submit' name='brand_id' value='{brand.id}' style='margin:10px; padding:5px;'>{brand.business_name}</button><br>"
-        html += "</form>"
-        return HttpResponse(html)
+    brand_id = request.GET.get('brand_id')
     
-    request.session["pending_brand_id"] = request.POST.get("brand_id")
+    if not brand_id:
+        brand = Brand.objects.filter(user=request.user).first()
+        if brand:
+            brand_id = brand.id
+            
+    if not brand_id:
+        return HttpResponseBadRequest("<h2>No Brand found. Please create a brand first.</h2>")
+
+    request.session["pending_brand_id"] = brand_id
+    
     step = start_instagram_login(request.user.pk)
     
     request.session["ig_state"] = step.state
     request.session["ig_remember"] = step.remember
     return redirect(step.url)
-
 @login_required
 def callback_instagram(request):
     if 'error' in request.GET or 'code' not in request.GET:
