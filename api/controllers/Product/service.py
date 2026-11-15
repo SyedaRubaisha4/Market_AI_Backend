@@ -1,12 +1,8 @@
 from django.db import transaction
 from django.core.paginator import Paginator
-<<<<<<< HEAD
-from domain.models.Brand import Brand
-=======
 from django.core.files import File
 from django.utils.text import slugify
 
->>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
 from domain.models.Product import Product
 from domain.models.ProductImage import ProductImage
 from domain.models.GeneratedContent import GeneratedContent
@@ -69,7 +65,7 @@ def enhance_product_image(image_file, product_id):
 
 def create_or_update_product(data, image_files, request=None, product_id=None):
     try:
-        product_id = data.get("id")
+        product_id = data.get("id") or product_id
         if not product_id and request:
             product_id = request.parser_context.get('kwargs', {}).get('product_id')
 
@@ -81,7 +77,11 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
             except (ValueError, TypeError, AttributeError):
                 return CreateResponse.error("Invalid product ID.")
 
-            product = Product.objects.filter(pk=product_id, brand__user=request.user).first()
+            product = Product.objects.filter(
+                pk=product_id,
+                brand__user=request.user,
+                action_type=1,
+            ).first()
 
             if not product:
                 return CreateResponse.error("Product not found.")
@@ -89,21 +89,10 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
         payload = data.copy()
         payload.pop("product_images", None)
 
-<<<<<<< HEAD
-        if product is not None:
-            update_fields = {}
-            for key, value in payload.items():
-                if key in ['name', 'status', 'price', 'currency', 'description', 'basic_details']:
-                    update_fields[key] = value
-            
-            if update_fields:
-                Product.objects.filter(pk=product_id).update(**update_fields)
-                product.refresh_from_db() 
-=======
         serializer = ProductSerializer(
             instance=product,
             data=payload,
-            partial=product is not None
+            partial=product is not None,
         )
 
         if not serializer.is_valid():
@@ -111,6 +100,8 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
 
         values = dict(serializer.validated_data)
         values.pop("action_type", None)
+        if product is not None:
+            values.pop("brand", None)
 
         generated_text = None
         generated_images = []
@@ -135,7 +126,6 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
 
         with transaction.atomic():
             product.save()
->>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
 
             if generated_text is not None:
                 GeneratedContent.objects.create(
@@ -146,78 +136,23 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
                 )
 
             for index, image_file in enumerate(image_files or []):
-<<<<<<< HEAD
                 enhanced_file = enhance_product_image(image_file, product.id)
-                
                 file_name = uuid.uuid4().hex
-=======
-                file_extension = os.path.splitext(image_file.name)[1]
-                file_name = f"{slugify(product.name) or 'product'}-{uuid.uuid4().hex}"
->>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
                 file_path = f"products/{product.id}"
                 saved_path = HelperFunctions.save_file(enhanced_file, file_name, file_path)
                 image_url = request.build_absolute_uri("/" + saved_path.replace("\\", "/").lstrip("/"))
-                
-                ProductImage.objects.create(
+                image_extension = os.path.splitext(enhanced_file.name)[1]
+
+                image = ProductImage.objects.create(
                     product=product,
-<<<<<<< HEAD
-                    storage_key=f"{file_path}/{file_name}.jpg",
-=======
-                    storage_key=(
-                        f"{file_path}/{file_name}"
-                        f"{file_extension}"
-                    ),
->>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
+                    storage_key=f"{file_path}/{file_name}{image_extension}",
                     image_url=image_url,
                     image_type="image/jpeg",
                     alt_text=os.path.splitext(image_file.name)[0],
                     is_primary=(index == 0),
                 )
+                saved_images.append(image)
 
-<<<<<<< HEAD
-            return CreateResponse.success(
-                {"product": ProductSerializer(product).data, "images": ProductImageSerializer(ProductImage.objects.filter(product=product), many=True).data},
-                errormessages.SUCCESS
-            )
-
-        else:
-            serializer = ProductSerializer(data=payload, partial=False)
-            if not serializer.is_valid():
-                return CreateResponse.error(serializer.errors)
-            
-            values = dict(serializer.validated_data)
-            values.pop("action_type", None)
-            if 'brand_id' in data and not values.get('brand'):
-                values['brand_id'] = data['brand_id']
-                
-            product = Product(**values)
-            saved_images = []
-
-            with transaction.atomic():
-                product.save()
-                for index, image_file in enumerate(image_files or []):
-                    enhanced_file = enhance_product_image(image_file, product.id)
-                    
-                    file_name = uuid.uuid4().hex
-                    file_path = f"products/{product.id}"
-                    saved_path = HelperFunctions.save_file(enhanced_file, file_name, file_path)
-                    image_url = request.build_absolute_uri("/" + saved_path.replace("\\", "/").lstrip("/"))
-                    
-                    image = ProductImage.objects.create(
-                        product=product,
-                        storage_key=f"{file_path}/{file_name}.jpg",
-                        image_url=image_url,
-                        image_type="image/jpeg",
-                        alt_text=os.path.splitext(image_file.name)[0],
-                        is_primary=(index == 0),
-                    )
-                    saved_images.append(image)
-
-            return CreateResponse.success(
-                {"product": ProductSerializer(product).data, "images": ProductImageSerializer(saved_images, many=True).data},
-                errormessages.SUCCESS
-            )
-=======
             for image_path in generated_images:
                 image_path = os.fspath(image_path)
                 file_extension = os.path.splitext(image_path)[1]
@@ -249,6 +184,12 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
                 )
                 saved_images.append(image)
 
+        if product_id:
+            saved_images = ProductImage.objects.filter(
+                product=product,
+                action_type=1,
+            )
+
         return CreateResponse.success(
             {
                 "product": ProductSerializer(product).data,
@@ -258,7 +199,6 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
             },
             errormessages.SUCCESS
         )
->>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
 
     except Exception as e:
         print(traceback.format_exc())
@@ -332,7 +272,11 @@ def get_products(request):
 
 def get_product_by_id(product_id, request):
     try:
-        product = Product.objects.filter(pk=product_id, brand__user=request.user).first()
+        product = Product.objects.filter(
+            pk=product_id,
+            brand__user=request.user,
+            action_type=1,
+        ).first()
         if not product:
             return CreateResponse.error(errormessages.PRODUCT_NOT_FOUND, int(ErrorCodes.NOT_FOUND))
         
@@ -354,21 +298,19 @@ def get_product_by_id(product_id, request):
 
 def delete_product(product_id, request):
     try:
-        product = Product.objects.filter(pk=product_id, brand__user=request.user).first()
+        product = Product.objects.filter(
+            pk=product_id,
+            brand__user=request.user,
+            action_type=1,
+        ).first()
         if not product:
             return CreateResponse.error(errormessages.NO_RECORD, int(ErrorCodes.NOT_FOUND))
         
         with transaction.atomic():
-<<<<<<< HEAD
-            ProductImage.objects.filter(product=product).delete()
-            
-            product.delete()
-=======
             product.action_type = 3
             product.save()
             ProductImage.objects.filter(product=product).update(action_type=3)
             GeneratedContent.objects.filter(product=product).update(action_type=3)
->>>>>>> 8ccf7dea46bb3c225048fdcd2fe653482932cd4c
 
         return CreateResponse.success(None, errormessages.SUCCESS)
     except Exception as e:
