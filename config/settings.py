@@ -210,6 +210,11 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'https://market-ai-henna.vercel.app',
 ]
+DEBUG = True
+# settings.py ke end mein
+import os
+if os.environ.get('RUN_MAIN') != 'true':
+    pass
 # or keep CORS_ALLOW_ALL_ORIGINS = True only when DEBUG:
 # CORS_ALLOW_ALL_ORIGINS = DEBUG
 
