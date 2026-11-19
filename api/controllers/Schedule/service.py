@@ -1,13 +1,5 @@
-<<<<<<< HEAD
-from domain.models.ScheduledPost import ScheduledPost as Schedule
-from domain.serializers.serializers import ScheduledPostSerializer as ScheduleSerializer
 from domain.models.ScheduledPost import ScheduledPost
 from domain.serializers.serializers import ScheduledPostSerializer
-import uuid
-=======
-from domain.models.ScheduledPost import ScheduledPost
-from domain.serializers.serializers import ScheduledPostSerializer
->>>>>>> 03068d74c73c51b4e0028b6152608326ed2983e5
 from uuid import UUID
 from utility.common.createresponse import CreateResponse
 import traceback
@@ -143,15 +135,6 @@ def delete_schedule(schedule_id, request):
         traceback.print_exc()
         return CreateResponse.error(f"An error occurred: {str(e)}")
 
-<<<<<<< HEAD
-def get_all_schedules(request):
-    try:
-        schedules = Schedule.objects.filter(brand__user=request.user, action_type=1)
-        
-        serializer = ScheduleSerializer(schedules, many=True)
-        return CreateResponse.success("Schedules retrieved successfully.", serializer.data)
-=======
-
 def get_all_schedules(request):
     try:
         schedules = ScheduledPost.objects.filter(
@@ -163,7 +146,6 @@ def get_all_schedules(request):
             serializer.data,
             "Schedules retrieved successfully.",
         )
->>>>>>> 03068d74c73c51b4e0028b6152608326ed2983e5
     except Exception as e:
         traceback.print_exc()
         return CreateResponse.error(f"An error occurred: {str(e)}")

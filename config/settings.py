@@ -228,20 +228,4 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-<<<<<<< HEAD
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'https://market-ai-henna.vercel.app',
-]
-DEBUG = True
-# settings.py ke end mein
-import os
-if os.environ.get('RUN_MAIN') != 'true':
-    pass
-=======
-
-
->>>>>>> 03068d74c73c51b4e0028b6152608326ed2983e5
-# or keep CORS_ALLOW_ALL_ORIGINS = True only when DEBUG:
-# CORS_ALLOW_ALL_ORIGINS = DEBUG
 
