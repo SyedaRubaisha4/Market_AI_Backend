@@ -9,6 +9,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from .service import create_brand, get_user_brands, get_brand_by_id, update_brand, delete_brand
+from domain.serializers.serializers import BrandSerializer
 
 # --- 1. CREATE BRAND ---
 @swagger_auto_schema(
@@ -39,7 +40,15 @@ def view_create_brand(request):
         return Response({"success": False, "errors": "Auth required."}, status=401)
     try:
         brand = create_brand(request.user, request.data)
-        return Response({"success": True, "id": brand.id, "message": "Brand created."}, status=201)
+        return Response(
+            {
+                "success": True,
+                "id": brand.id,
+                "data": BrandSerializer(brand).data,
+                "message": "Brand created.",
+            },
+            status=201,
+        )
     except Exception as e:
         return Response({"success": False, "errors": str(e)}, status=400)
 
