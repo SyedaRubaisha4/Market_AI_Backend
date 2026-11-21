@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.core.exceptions import ValidationError
 from .service import register_user, login_user, logout_user,change_password,request_password_reset
 
 @swagger_auto_schema(
@@ -25,8 +26,9 @@ def view_register_user(request):
         user = register_user(request.data)
         
     except Exception as e:
+        errors = "; ".join(e.messages) if isinstance(e, ValidationError) else str(e)
         return Response(
-            {"success": False, "errors": str(e)},
+            {"success": False, "errors": errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

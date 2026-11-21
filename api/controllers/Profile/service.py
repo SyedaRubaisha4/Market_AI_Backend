@@ -14,9 +14,11 @@ User = get_user_model()
 def get_profile(user):
     from domain.models.Brand import Brand 
 
-    brands = Brand.objects.filter(user=user)
-    has_brand = brands.exists()
-    brand_id = brands.first().id if has_brand else None
+    brand = (
+        Brand.objects.filter(user=user, action_type=1)
+        .order_by("-created_on")
+        .first()
+    )
 
     return {
         "id": user.id,
@@ -25,8 +27,8 @@ def get_profile(user):
         "full_name": getattr(user, 'full_name', ''),
         "is_active": user.is_active,
         "date_joined": user.date_joined,
-        "is_onboarded": has_brand,
-        "brand_id": brand_id       
+        "is_onboarded": brand is not None,
+        "brand_id": brand.id if brand is not None else None,
     }
 
 def update_profile(user, data):

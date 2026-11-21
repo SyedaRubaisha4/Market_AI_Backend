@@ -7,7 +7,7 @@ from api.controllers.Brands.views import (
 urlpatterns = [
     path('', view_list_brands, name='list_brands'),
     path('create/', view_create_brand, name='create_brand'),
-    path('<int:brand_id>/', view_get_brand, name='get_brand'),
-    path('<int:brand_id>/update/', view_update_brand, name='update_brand'),
-    path('<int:brand_id>/delete/', view_delete_brand, name='delete_brand'),
+    path('<uuid:brand_id>/', view_get_brand, name='get_brand'),
+    path('<uuid:brand_id>/update/', view_update_brand, name='update_brand'),
+    path('<uuid:brand_id>/delete/', view_delete_brand, name='delete_brand'),
 ]

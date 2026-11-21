@@ -20,11 +20,11 @@ def create_brand(user, data):
     return brand
 
 def get_user_brands(user):
-    return Brand.objects.filter(user=user, is_active=True).order_by('-created_on')
+    return Brand.objects.filter(user=user, action_type=1).order_by('-created_on')
 
 def get_brand_by_id(user, brand_id):
     try:
-        return Brand.objects.get(id=brand_id, user=user, is_active=True)
+        return Brand.objects.get(id=brand_id, user=user, action_type=1)
     except Brand.DoesNotExist:
         raise ValidationError("Brand not found or you don't have permission.")
 
@@ -47,6 +47,6 @@ def update_brand(user, brand_id, data):
 
 def delete_brand(user, brand_id):
     brand = get_brand_by_id(user, brand_id)
-    brand.is_active = False # Soft delete
-    brand.save()
+    brand.action_type = 3
+    brand.save(update_fields=["action_type", "updated_on"])
     return True

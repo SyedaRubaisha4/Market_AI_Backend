@@ -93,7 +93,9 @@ def register_user(data):
         raise ValidationError("Password must contain at least one special character (!@#$%^&*).")
     # 5. Username check
     if User.objects.filter(username__iexact=username).exists():
-        raise ValidationError("Username already taken.")
+        raise ValidationError(
+            "Username already taken. Please choose a different username or log in."
+        )
 
     # 6. Email exists check
     if User.objects.filter(email__iexact=email).exists():

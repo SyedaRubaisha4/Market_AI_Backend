@@ -57,7 +57,14 @@ def view_list_brands(request):
 # --- 3. GET BRAND BY ID ---
 @swagger_auto_schema(
     method='get', security=[{'Bearer': []}], tags=['Brand'],
-    manual_parameters=[openapi.Parameter('brand_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER)]
+    manual_parameters=[
+        openapi.Parameter(
+            'brand_id',
+            openapi.IN_PATH,
+            type=openapi.TYPE_STRING,
+            format='uuid',
+        )
+    ]
 )
 @api_view(['GET'])
 def view_get_brand(request, brand_id):
@@ -75,7 +82,14 @@ def view_get_brand(request, brand_id):
 # --- 4. UPDATE BRAND ---
 @swagger_auto_schema(
     method='patch', security=[{'Bearer': []}], tags=['Brand'],
-    manual_parameters=[openapi.Parameter('brand_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER)],
+    manual_parameters=[
+        openapi.Parameter(
+            'brand_id',
+            openapi.IN_PATH,
+            type=openapi.TYPE_STRING,
+            format='uuid',
+        )
+    ],
     request_body=openapi.Schema(type=openapi.TYPE_OBJECT, properties={
         'business_name': openapi.Schema(type=openapi.TYPE_STRING),
         'description': openapi.Schema(type=openapi.TYPE_STRING),
@@ -95,7 +109,14 @@ def view_update_brand(request, brand_id):
 # --- 5. DELETE BRAND ---
 @swagger_auto_schema(
     method='delete', security=[{'Bearer': []}], tags=['Brand'],
-    manual_parameters=[openapi.Parameter('brand_id', openapi.IN_PATH, type=openapi.TYPE_INTEGER)]
+    manual_parameters=[
+        openapi.Parameter(
+            'brand_id',
+            openapi.IN_PATH,
+            type=openapi.TYPE_STRING,
+            format='uuid',
+        )
+    ]
 )
 @api_view(['DELETE'])
 def view_delete_brand(request, brand_id):
