@@ -103,8 +103,6 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
             values.pop("brand", None)
         else:
             brand = values.get("brand")
-            if brand is None or brand.user_id != request.user.id:
-                return CreateResponse.error("Brand not found.")
 
         generated_text = None
         generated_images = []
@@ -116,7 +114,7 @@ def create_or_update_product(data, image_files, request=None, product_id=None):
                 price=product.price,
                 details=product.basic_details,
             )
-            generated_images = generate_product_images(
+            generated_images, _ = generate_product_images(
                 name=product.name,
                 category=product.category_id,
                 details=product.basic_details,
