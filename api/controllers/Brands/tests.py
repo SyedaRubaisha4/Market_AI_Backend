@@ -7,7 +7,7 @@ from django.test import SimpleTestCase
 from django.urls import resolve
 from rest_framework.test import APIRequestFactory, force_authenticate
 
-from api.controllers.Brands.views import view_create_brand
+from api.controllers.Brands.views import view_create_brand, view_update_brand
 
 
 class BrandUrlTests(SimpleTestCase):
@@ -86,3 +86,37 @@ class BrandCreateResponseTests(SimpleTestCase):
         self.assertEqual(data["user_id"], str(user.id))
         self.assertEqual(data["business_name"], brand.business_name)
         self.assertEqual(data["tone_of_voice"], brand.tone_of_voice)
+
+
+class BrandUpdateAuthenticationTests(SimpleTestCase):
+    def test_update_requires_authentication(self):
+        brand_id = uuid.uuid4()
+        request = APIRequestFactory().patch(
+            f"/api/brands/{brand_id}/update/",
+            {"description": "Updated description"},
+            format="json",
+        )
+
+        with patch("api.controllers.Brands.views.update_brand") as update:
+            response = view_update_brand(request, brand_id)
+
+        self.assertEqual(response.status_code, 401)
+        update.assert_not_called()
+
+    def test_authenticated_user_can_update_brand(self):
+        user = SimpleNamespace(id=uuid.uuid4(), is_authenticated=True)
+        brand_id = uuid.uuid4()
+        request = APIRequestFactory().patch(
+            f"/api/brands/{brand_id}/update/",
+            {"description": "Updated description"},
+            format="json",
+        )
+        force_authenticate(request, user=user)
+
+        with patch("api.controllers.Brands.views.update_brand") as update:
+            response = view_update_brand(request, brand_id)
+
+        self.assertEqual(response.status_code, 200)
+        update.assert_called_once_with(
+            user, brand_id, {"description": "Updated description"}
+        )

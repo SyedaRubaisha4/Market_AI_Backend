@@ -106,6 +106,8 @@ def view_get_brand(request, brand_id):
     })
 )
 @api_view(['PATCH'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def view_update_brand(request, brand_id):
     if not request.user.is_authenticated:
         return Response({"success": False, "errors": "Auth required."}, status=401)
